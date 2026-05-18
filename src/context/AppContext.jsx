@@ -9,23 +9,27 @@ export function AppProvider({ children }) {
   const isLoaded = useRef(false);
 
   useEffect(() => {
-    const storedMembers = localStorage.getItem('room_members');
-    if (storedMembers) {
-      setMembers(JSON.parse(storedMembers));
-    } else {
-      localStorage.setItem('room_members', JSON.stringify([]));
-      setMembers([]);
-    }
+    const allUsers = JSON.parse(localStorage.getItem('users') || '[]');
+    const storedMembers = JSON.parse(localStorage.getItem('room_members') || '[]');
 
-    const storedExpenses = localStorage.getItem('room_expenses');
-    if (storedExpenses) {
-      setExpenses(JSON.parse(storedExpenses));
-    } else {
-      localStorage.setItem('room_expenses', JSON.stringify({}));
-      setExpenses({});
-    }
+    // Make sure every user in users (including Admin) is in room_members
+    allUsers.forEach(u => {
+      if (!storedMembers.some(m => m.phone === u.phone || m.id === u.id)) {
+        storedMembers.push({
+          id: u.id,
+          name: u.name,
+          email: u.email || '',
+          phone: u.phone,
+          joinDate: u.joinDate || new Date().toISOString().split('T')[0]
+        });
+      }
+    });
 
-    isLoaded.current = true;
+    localStorage.setItem('room_members', JSON.stringify(storedMembers));
+    setMembers(storedMembers);
+
+    const storedExpenses = JSON.parse(localStorage.getItem('room_expenses') || '{}');
+    setExpenses(storedExpenses);
   }, []);
 
   // Listen for member updates from registration or admin actions
@@ -38,7 +42,7 @@ export function AppProvider({ children }) {
     return () => window.removeEventListener('members-updated', handleMembersUpdated);
   }, []);
 
-  // Listen for expense updates from admin user deletion
+  // Listen for expense updates from admin actions
   useEffect(() => {
     const handleExpensesUpdated = () => {
       const storedExpenses = localStorage.getItem('room_expenses');
@@ -48,47 +52,46 @@ export function AppProvider({ children }) {
     return () => window.removeEventListener('expenses-updated', handleExpensesUpdated);
   }, []);
 
-  // Sync members to localStorage after initial load
-  useEffect(() => {
-    if (isLoaded.current) {
-      localStorage.setItem('room_members', JSON.stringify(members));
-    }
-  }, [members]);
-
-  // Sync expenses to localStorage after initial load
-  useEffect(() => {
-    if (isLoaded.current) {
-      localStorage.setItem('room_expenses', JSON.stringify(expenses));
-    }
-  }, [expenses]);
-
   const addMember = (member) => {
     const newMember = { ...member, id: Date.now() };
-    setMembers(prev => [...prev, newMember]);
+    setMembers(prev => {
+      const updated = [...prev, newMember];
+      localStorage.setItem('room_members', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const updateMember = (id, data) => {
-    setMembers(prev => prev.map(m => m.id === id ? { ...m, ...data } : m));
+    setMembers(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, ...data } : m);
+      localStorage.setItem('room_members', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const deleteMember = (id) => {
-    setMembers(prev => prev.filter(m => m.id !== id));
+    setMembers(prev => {
+      const updated = prev.filter(m => m.id !== id);
+      localStorage.setItem('room_members', JSON.stringify(updated));
+      return updated;
+    });
     setExpenses(prev => {
       const updated = {};
       Object.entries(prev).forEach(([month, records]) => {
         updated[month] = records.filter(r => r.memberId !== id);
       });
+      localStorage.setItem('room_expenses', JSON.stringify(updated));
       return updated;
     });
   };
 
-  // Delete all expense records for a specific user (called on admin user delete)
   const deleteUserExpenses = (userId) => {
     setExpenses(prev => {
       const updated = {};
       Object.entries(prev).forEach(([month, records]) => {
         updated[month] = records.filter(r => r.memberId !== userId);
       });
+      localStorage.setItem('room_expenses', JSON.stringify(updated));
       return updated;
     });
   };
@@ -96,30 +99,36 @@ export function AppProvider({ children }) {
   const addExpenseRecord = (month, record) => {
     setExpenses(prev => {
       const monthData = prev[month] || [];
-      return {
+      const updated = {
         ...prev,
         [month]: [...monthData, { ...record, id: Date.now(), paid: 0, payments: [] }]
       };
+      localStorage.setItem('room_expenses', JSON.stringify(updated));
+      return updated;
     });
   };
 
   const updateExpenseRecord = (month, id, data) => {
     setExpenses(prev => {
       const monthData = prev[month] || [];
-      return {
+      const updated = {
         ...prev,
         [month]: monthData.map(r => r.id === id ? { ...r, ...data } : r)
       };
+      localStorage.setItem('room_expenses', JSON.stringify(updated));
+      return updated;
     });
   };
 
   const deleteExpenseRecord = (month, id) => {
     setExpenses(prev => {
       const monthData = prev[month] || [];
-      return {
+      const updated = {
         ...prev,
         [month]: monthData.filter(r => r.id !== id)
       };
+      localStorage.setItem('room_expenses', JSON.stringify(updated));
+      return updated;
     });
   };
 
@@ -140,11 +149,17 @@ export function AppProvider({ children }) {
       const newMonthData = [...monthData];
       newMonthData[expenseIndex] = updatedExpense;
 
-      const member = members.find(m => m.id === expense.memberId);
-      const memberName = member ? member.name : 'Member';
-      showNotification(`Payment of ৳${amount} recorded for ${memberName}. SMS/Email confirmation sent.`);
+      const updated = { ...prev, [month]: newMonthData };
+      localStorage.setItem('room_expenses', JSON.stringify(updated));
 
-      return { ...prev, [month]: newMonthData };
+      // Show notification after updating state
+      setTimeout(() => {
+        const member = members.find(m => m.id === expense.memberId);
+        const memberName = member ? member.name : 'Member';
+        showNotification(`Payment of ৳${amount} recorded for ${memberName}. SMS/Email confirmation sent.`);
+      }, 50);
+
+      return updated;
     });
   };
 
