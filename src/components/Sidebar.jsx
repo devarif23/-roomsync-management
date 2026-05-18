@@ -75,7 +75,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
           <div className="border-t pt-3 mt-3 px-2">
             <div className="text-xs text-muted-foreground text-center">
-              © 2026 RoomSync
+              © 2026 Arif jahan
             </div>
           </div>
         </div>

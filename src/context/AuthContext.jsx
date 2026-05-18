@@ -22,7 +22,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (phone, password) => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    let users = JSON.parse(localStorage.getItem('users') || '[]');
+    if (!users || users.length === 0) {
+      users = initialUsers;
+      localStorage.setItem('users', JSON.stringify(initialUsers));
+    }
     const foundUser = users.find(u => u.phone === phone && u.password === password);
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
