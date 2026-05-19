@@ -3,7 +3,28 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 
 const initialUsers = [
-  { id: 1, name: 'Admin', phone: '01700000000', email: 'admin@room.com', role: 'admin', password: 'admin123', verified: true, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' }
+  {
+    id: "USR-1001",
+    name: "Admin",
+    email: "admin@room.com",
+    phone: "01700000000",
+    password: "123456",
+    role: "admin",
+    status: "verified",
+    joinDate: "2026-05-19",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
+  },
+  {
+    id: "USR-1002",
+    name: "Arif",
+    email: "arif@gmail.com",
+    phone: "01570223729",
+    password: "123456",
+    role: "user",
+    status: "unverified",
+    joinDate: "2026-05-19",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Arif"
+  }
 ];
 
 export function AuthProvider({ children }) {
@@ -34,7 +55,7 @@ export function AuthProvider({ children }) {
     let foundUser = users.find(u => u.phone === phone && u.password === password);
 
     // Hard fallback: If admin user was deleted or modified during tests, always allow default admin credentials
-    if (!foundUser && phone === '01700000000' && password === 'admin123') {
+    if (!foundUser && phone === '01700000000' && password === '123456') {
       foundUser = { ...initialUsers[0] };
       if (!users.some(u => u.phone === '01700000000')) {
         users.unshift(foundUser);

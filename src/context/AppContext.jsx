@@ -28,7 +28,24 @@ export function AppProvider({ children }) {
     localStorage.setItem('room_members', JSON.stringify(storedMembers));
     setMembers(storedMembers);
 
-    const storedExpenses = JSON.parse(localStorage.getItem('room_expenses') || '{}');
+    let storedExpenses = JSON.parse(localStorage.getItem('room_expenses') || 'null');
+    if (!storedExpenses) {
+      storedExpenses = {
+        "2026-05": [
+          {
+            id: "EXP-1001",
+            memberId: "USR-1002",
+            wifi: 500,
+            electricity: 800,
+            rent: 3000,
+            other: 200,
+            paid: 3000,
+            payments: []
+          }
+        ]
+      };
+      localStorage.setItem('room_expenses', JSON.stringify(storedExpenses));
+    }
     setExpenses(storedExpenses);
   }, []);
 
