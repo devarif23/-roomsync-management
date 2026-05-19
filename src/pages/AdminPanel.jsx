@@ -39,9 +39,25 @@ export default function AdminPanel() {
   const [editBillId, setEditBillId] = useState(null);
   const [editBillData, setEditBillData] = useState({});
 
-  const refreshUsers = () => setUsers(getAllUsers());
+  const refreshUsers = () => {
+    if (getAllUsers) {
+      setUsers(getAllUsers());
+    }
+  };
 
-  useEffect(() => { refreshUsers(); }, [members]);
+  useEffect(() => {
+    refreshUsers();
+  }, [members, activeTab]);
+
+  useEffect(() => {
+    const handleSync = () => refreshUsers();
+    window.addEventListener('users-updated', handleSync);
+    window.addEventListener('members-updated', handleSync);
+    return () => {
+      window.removeEventListener('users-updated', handleSync);
+      window.removeEventListener('members-updated', handleSync);
+    };
+  }, []);
 
   // ── Overview stats ──────────────────────────────────────────────
   const stats = (() => {
@@ -148,7 +164,7 @@ export default function AdminPanel() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); refreshUsers(); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.id ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <Icon className="h-4 w-4" /> {tab.label}

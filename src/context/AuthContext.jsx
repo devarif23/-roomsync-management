@@ -66,6 +66,7 @@ export function AuthProvider({ children }) {
     };
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
+    window.dispatchEvent(new Event('users-updated'));
 
     const roomMembers = JSON.parse(localStorage.getItem('room_members') || '[]');
     if (!roomMembers.some(m => m.phone === userData.phone)) {
@@ -78,6 +79,7 @@ export function AuthProvider({ children }) {
       });
       localStorage.setItem('room_members', JSON.stringify(roomMembers));
       window.dispatchEvent(new Event('members-updated'));
+      window.dispatchEvent(new Event('users-updated'));
     }
     return { success: true };
   };
@@ -135,6 +137,7 @@ export function AuthProvider({ children }) {
     };
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
+    window.dispatchEvent(new Event('users-updated'));
 
     // Add to room_members
     const roomMembers = JSON.parse(localStorage.getItem('room_members') || '[]');
@@ -148,6 +151,7 @@ export function AuthProvider({ children }) {
       });
       localStorage.setItem('room_members', JSON.stringify(roomMembers));
       window.dispatchEvent(new Event('members-updated'));
+      window.dispatchEvent(new Event('users-updated'));
     }
     return { success: true };
   };
@@ -160,6 +164,7 @@ export function AuthProvider({ children }) {
 
     users[idx] = { ...users[idx], ...data };
     localStorage.setItem('users', JSON.stringify(users));
+    window.dispatchEvent(new Event('users-updated'));
 
     // Sync name/email/phone to room_members
     const roomMembers = JSON.parse(localStorage.getItem('room_members') || '[]');
@@ -174,6 +179,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('room_members', JSON.stringify(roomMembers));
     }
     window.dispatchEvent(new Event('members-updated'));
+    window.dispatchEvent(new Event('users-updated'));
 
     // If editing self, refresh auth state
     if (user && user.id === id) {
@@ -204,6 +210,7 @@ export function AuthProvider({ children }) {
     // Notify all contexts to re-sync
     window.dispatchEvent(new Event('members-updated'));
     window.dispatchEvent(new Event('expenses-updated'));
+    window.dispatchEvent(new Event('users-updated'));
     return { success: true };
   };
 
